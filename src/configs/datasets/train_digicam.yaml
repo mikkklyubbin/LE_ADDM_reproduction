@@ -1,0 +1,10 @@
+train:
+  _target_: src.datasets.DigiCamDataset
+  dataset_length: -1
+  name: "train"
+  instance_transforms: ${transforms.instance_transforms.train}
+test:
+  _target_: src.datasets.DigiCamDataset
+  dataset_length: -1
+  name: "test"
+  instance_transforms: ${transforms.instance_transforms.inference}

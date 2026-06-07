@@ -1,0 +1,5 @@
+test:
+  _target_: src.datasets.DigiCamDataset
+  dataset_length: -1
+  name: "test"
+  instance_transforms: ${transforms.instance_transforms.inference}
