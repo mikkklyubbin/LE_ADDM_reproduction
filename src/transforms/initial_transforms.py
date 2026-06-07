@@ -1,0 +1,16 @@
+import numpy as np
+import torch
+from lenslees_helpers.preprocessor import get_dataset_object
+from torch import nn
+
+
+def load_mask_by_id(mask_label, masks_root):
+    mask_label = int(mask_label)
+    mask = np.load(f"{masks_root}/masks/{mask_label}.pt")
+    return mask
+
+
+def DoubleSizes(masks_root, **data):
+    mask = load_mask_by_id(data["mask_label"], masks_root)
+    lensed, lensless, psf = get_dataset_object(data["lensed"], data["lensless"], mask)
+    return {"lensed": lensed, "lensless": lensless, "psf": psf}
