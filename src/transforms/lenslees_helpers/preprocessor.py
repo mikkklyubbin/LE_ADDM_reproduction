@@ -3,8 +3,8 @@ import warnings
 import cv2
 import numpy as np
 import torch
-from lensless_helpers.psf import simulate_psf_from_mask
-from lensless_helpers.utils import resize
+from lenslees_helpers.psf import simulate_psf_from_mask
+from lenslees_helpers.utils import resize
 
 ALIGNMENT = {}
 ALIGNMENT["top_left"] = (80, 100)
