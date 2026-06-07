@@ -7,8 +7,8 @@ from tqdm.auto import tqdm
 
 from datasets import load_dataset
 from src.datasets.base_dataset import BaseDataset
+from src.transforms import DoubleSizes
 from src.utils.io_utils import ROOT_PATH, read_json, write_json
-from transforms import DoubleSizes
 
 
 class DigiCamDataset(BaseDataset):
