@@ -50,7 +50,7 @@ class ADMM(nn.Module):
 
 
 class leADMM(nn.Module):
-    def __init__(self, num_its=100) -> None:
+    def __init__(self, num_its=20) -> None:
         super().__init__()
         self.us = torch.zeros((num_its, 4), requires_grad=True)
         self.tau = torch.zeros(num_its, requires_grad=True)

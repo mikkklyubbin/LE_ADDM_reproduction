@@ -17,10 +17,10 @@ def collate_fn(dataset_items: list[dict]):
     result_batch = {}
 
     # example of collate_fn
-    result_batch["lensed"] = torch.vstack(
+    result_batch["lensed"] = torch.stack(
         [elem["lensed"] for elem in dataset_items]
     )
-    result_batch["lensless"] = torch.vstack(
+    result_batch["lensless"] = torch.stack(
         [elem["lensless"] for elem in dataset_items]
     )
     result_batch["psf"] = torch.stack(
