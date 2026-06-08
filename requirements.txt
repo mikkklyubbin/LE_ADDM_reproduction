@@ -12,7 +12,7 @@ hydra-core
 black
 isort
 pre-commit
-
+datasets>=2.18,<2.19
 transformers>=4.37,<4.38
 huggingface-hub>=0.19.3,<0.21
 tokenizers>=0.14,<0.16
