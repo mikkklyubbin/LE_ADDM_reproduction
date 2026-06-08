@@ -9,7 +9,7 @@ from torchmetrics.functional.image.lpips import (
 )
 
 from src.metrics.base_metric import BaseMetric
-from transforms import get_roi
+from src.transforms import get_roi
 
 
 class ImageMetric(BaseMetric):
