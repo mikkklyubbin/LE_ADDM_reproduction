@@ -1,12 +1,12 @@
 import numpy as np
 import torch
-from lenslees_helpers.preprocessor import get_dataset_object
+from src.transforms.lenslees_helpers.preprocessor import get_dataset_object
 from torch import nn
 
 
 def load_mask_by_id(mask_label, masks_root):
     mask_label = int(mask_label)
-    mask = np.load(f"{masks_root}/masks/{mask_label}.pt")
+    mask = np.load(f"{masks_root}/mask_{mask_label}.npy")
     return mask
 
 

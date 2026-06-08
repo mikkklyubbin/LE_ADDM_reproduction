@@ -1,7 +1,7 @@
 import numpy as np
 import torch
-from sensor import VirtualSensor
-from slm import get_intensity_psf, get_programmable_mask
+from src.transforms.lenslees_helpers.sensor import VirtualSensor
+from src.transforms.lenslees_helpers.slm import get_intensity_psf, get_programmable_mask
 from waveprop.devices import slm_dict
 
 

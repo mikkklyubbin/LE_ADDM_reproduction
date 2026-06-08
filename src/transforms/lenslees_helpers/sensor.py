@@ -2,7 +2,7 @@ from enum import Enum
 
 import numpy as np
 from cv2 import resize
-from lenslees_helpers.utils import load_image, rgb2gray
+from src.transforms.lenslees_helpers.utils import load_image, rgb2gray
 
 
 class SensorOptions(Enum):

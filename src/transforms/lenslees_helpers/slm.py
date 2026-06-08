@@ -1,7 +1,7 @@
 import os
 
 import numpy as np
-from lenslees_helpers.utils import get_ctypes
+from src.transforms.lenslees_helpers.utils import get_ctypes
 from scipy.ndimage import rotate as rotate_func
 from slm_controller.hardware import SLMParam, slm_devices
 
