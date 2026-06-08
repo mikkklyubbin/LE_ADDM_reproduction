@@ -43,7 +43,7 @@ def main(config):
     # save_path for model predictions
     save_path = ROOT_PATH / "data" / "saved" / config.inferencer.save_path
     save_path.mkdir(exist_ok=True, parents=True)
-
+    skip_model_load = config.inferencer.skip_model_load
     inferencer = Inferencer(
         model=model,
         config=config,
@@ -52,7 +52,7 @@ def main(config):
         batch_transforms=batch_transforms,
         save_path=save_path,
         metrics=metrics,
-        skip_model_load=False,
+        skip_model_load=skip_model_load,
     )
 
     logs = inferencer.run_inference()
