@@ -37,7 +37,8 @@ class DigiCamDataset(BaseDataset):
             index = read_json(str(index_path))
         else:
             index = self._create_index(dataset_length, name)
-
+        data_path = ROOT_PATH / "data" / "DigiCam" / name
+        self.masks = data_path / "masks"
         super().__init__(index, *args, **kwargs)
 
     def _create_index(self, dataset_length, name):
