@@ -48,8 +48,15 @@ def get_cropped_lensed(lensed, lensless):
     return lensed
 
 
+def get_roi_tensors(image):
+    return image[
+        :,
+        :,
+        ALIGNMENT["top_left"][0] : ALIGNMENT["top_left"][0] + ALIGNMENT["height"],
+        ALIGNMENT["top_left"][1] : ALIGNMENT["top_left"][1] + ALIGNMENT["width"],
+    ]
+
 def get_roi(image):
-    image = image.transpose(0, 2, 3, 1)
     return image[
         ALIGNMENT["top_left"][0] : ALIGNMENT["top_left"][0] + ALIGNMENT["height"],
         ALIGNMENT["top_left"][1] : ALIGNMENT["top_left"][1] + ALIGNMENT["width"],
