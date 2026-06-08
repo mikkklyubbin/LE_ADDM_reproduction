@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 from torchmetrics.image.lpip import LearnedPerceptualImagePatchSimilarity
-
+from src.transforms import get_roi
 class LossAcum(nn.Module):
 
     def __init__(self, weights, list_of_losses):
@@ -25,7 +25,7 @@ class MSE_loss(nn.Module):
         self.loss = nn.MSELoss()
 
     def forward(self, reconstructed: torch.Tensor, lensed: torch.Tensor, **batch):
-        return {"lossL2": self.loss(reconstructed, lensed)}
+        return {"lossL2": self.loss(get_roi(reconstructed), get_roi(lensed))}
 
 class LPIPS_loss(nn.Module):
     def __init__(self, net_type="vgg", normalize=True, device="cuda"):
@@ -36,4 +36,4 @@ class LPIPS_loss(nn.Module):
         self.loss.to(device)
 
     def forward(self, reconstructed: torch.Tensor, lensed: torch.Tensor, **batch):
-        return {"lossLPIPS": self.loss(reconstructed, lensed)}
+        return {"lossLPIPS": self.loss(get_roi(reconstructed), get_roi(lensed))}
