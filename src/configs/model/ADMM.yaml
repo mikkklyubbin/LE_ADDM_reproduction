@@ -1,2 +1,2 @@
 _target_: src.model.ADMM
-num_iters: 100
+num_its: 100
