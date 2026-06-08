@@ -1,0 +1,29 @@
+train:
+  lensed:
+    _target_: src.transforms.tensor_transforms.DimSwap
+    permutation: [2, 0, 1]
+  lensless:
+    _target_: src.transforms.tensor_transforms.DimSwap
+    permutation: [2, 0, 1]
+  psf:
+    _target_: torch.nn.Sequential
+    _args_:
+      - _target_: src.transforms.tensor_transforms.Squeeze
+        dim: 0
+      - _target_: src.transforms.tensor_transforms.DimSwap
+        permutation: [2, 0, 1]
+
+inference:
+  lensed:
+    _target_: src.transforms.tensor_transforms.DimSwap
+    permutation: [2, 0, 1]
+  lensless:
+    _target_: src.transforms.tensor_transforms.DimSwap
+    permutation: [2, 0, 1]
+  psf:
+    _target_: torch.nn.Sequential
+    _args_:
+      - _target_: src.transforms.tensor_transforms.Squeeze
+        dim: 0
+      - _target_: src.transforms.tensor_transforms.DimSwap
+        permutation: [2, 0, 1]
