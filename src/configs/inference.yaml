@@ -3,7 +3,7 @@ defaults:
   - metrics: digi
   - datasets: eval_digicam
   - dataloader: example
-  - transforms: example
+  - transforms: digi_trans
   - _self_
 inferencer:
   device_tensors: ["lensed", "lensless", "psf"] # which tensors should be on device (ex. GPU)

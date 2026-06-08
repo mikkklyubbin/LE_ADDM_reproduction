@@ -6,6 +6,7 @@ from torch import nn
 class DimSwap(nn.Module):
     def __init__(self, permutation):
         super().__init__()
+        self.permutation = permutation
 
     def forward(self, x):
         return x.permute(*self.permutation)
