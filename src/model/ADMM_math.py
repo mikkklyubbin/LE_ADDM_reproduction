@@ -45,7 +45,7 @@ def calc_norms(x_0, psf_fft):
 def make_iteration(x, al1, al2_x, al2_y, al3, psf_fft, b, us, tau, norm_psf, norm_dx, norm_dy):
     reverse_op = (norm_psf * us[0] + norm_dx * us[1] + norm_dy * us[2] + us[3])
     u_x = soft_threshold(Dx(x) + al2_x / us[1], tau / us[1])
-    u_y = soft_threshold(Dy(x) + al2_y / us[2], tau / us[1])
+    u_y = soft_threshold(Dy(x) + al2_y / us[2], tau / us[2])
     v = (al1 + H(psf_fft, x) * us[0] + b) / (1 + us[0])
     w = torch.clamp(al3 / us[3] + x, 0)
     r = (
@@ -68,7 +68,6 @@ def zero_init(psf_fft, dtype, device):
     al2_y = torch.zeros_like(x_0)
     al3 = torch.zeros_like(x_0)
     return x_0, al1, al2_x, al2_y, al3
-
 
 
 

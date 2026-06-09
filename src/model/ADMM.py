@@ -6,8 +6,8 @@ from src.model.ADMM_math import make_iteration, calc_norms, zero_init
 
 
 class ADMM(nn.Module):
-    def __init__(self, num_its=100, tau=2 * 1e-4, us=1e-4) -> None:
-        super().__init__()
+    def init(self, num_its=100, tau=2 * 1e-4, us=1e-4) -> None:
+        super().init()
         self.register_buffer("_device_indicator", torch.empty(0), persistent=False)
         self.tau = tau
         self.us = [us] * 4
@@ -18,10 +18,13 @@ class ADMM(nn.Module):
         return self._device_indicator.device
 
     def forward(self, lensless, psf, **batch):
+        print(lensless.shape)
+        print(psf.shape)
         dtype = lensless.dtype
         device = self.device
         b = lensless.to(device)
         psf = psf.to(device)
+        psf = psf / (psf.sum(dim=(-2, -1), keepdim=True) + 1e-8)
         psf_fft = torch.fft.fft2(psf)
         x_0, al1, al2_x, al2_y, al3 = zero_init(psf_fft, dtype, device)
         norm_psf, norm_dx, norm_dy = calc_norms(x_0, psf_fft)
@@ -29,9 +32,11 @@ class ADMM(nn.Module):
             x_0, al1, al2_x, al2_y, al3 = make_iteration(
                 x_0, al1, al2_x, al2_y, al3, psf_fft, b, self.us, self.tau, norm_psf, norm_dx, norm_dy
             )
+        print(x_0.shape)
+        x_0 = torch.clamp(x_0, 0, 1)
         return {"reconstructed": x_0}
 
-    def __str__(self):
+    def str(self):
         """
         Model prints with the number of parameters.
         """
@@ -40,7 +45,7 @@ class ADMM(nn.Module):
             [p.numel() for p in self.parameters() if p.requires_grad]
         )
 
-        result_info = super().__str__()
+        result_info = super().str()
         result_info = result_info + f"\nAll parameters: {all_parameters}"
         result_info = result_info + f"\nTrainable parameters: {trainable_parameters}"
 
@@ -50,8 +55,8 @@ class ADMM(nn.Module):
 
 
 class leADMM(nn.Module):
-    def __init__(self, num_its=20) -> None:
-        super().__init__()
+    def init(self, num_its=20) -> None:
+        super().init()
         self.us = torch.zeros((num_its, 4), requires_grad=True)
         self.tau = torch.zeros(num_its, requires_grad=True)
         self.num_its = num_its
@@ -72,7 +77,7 @@ class leADMM(nn.Module):
             )
         return {"reconstructed": x_0}
 
-    def __str__(self):
+    def str(self):
         """
         Model prints with the number of parameters.
         """
@@ -81,7 +86,7 @@ class leADMM(nn.Module):
             [p.numel() for p in self.parameters() if p.requires_grad]
         )
 
-        result_info = super().__str__()
+        result_info = super().str()
         result_info = result_info + f"\nAll parameters: {all_parameters}"
         result_info = result_info + f"\nTrainable parameters: {trainable_parameters}"
 

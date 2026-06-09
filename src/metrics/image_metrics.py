@@ -10,7 +10,7 @@ from torchmetrics.functional.image.lpips import (
 
 from src.metrics.base_metric import BaseMetric
 from src.transforms import get_roi_tensors
-
+import matplotlib.pyplot as plt
 
 class ImageMetric(BaseMetric):
     def __init__(self, name, metric, *args, **kwargs):
@@ -33,6 +33,9 @@ class ImageMetric(BaseMetric):
                 assert False, f"Bad metric {metric}"
 
     def __call__(self, reconstructed, lensed, **batch):
+        plt.imshow(reconstructed[0].cpu().numpy())
+        plt.imshow(lensed[0].cpu().numpy())
         reconstructed_roi = get_roi_tensors(reconstructed)
         lensed_roi = get_roi_tensors(lensed)
+
         return self.metric(reconstructed_roi, lensed_roi, **self.args_for_metric).item()
