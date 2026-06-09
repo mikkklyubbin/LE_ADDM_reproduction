@@ -42,11 +42,19 @@ def calc_norms(x_0, psf_fft):
     Dy_op[-1, 0] = 1
     return calc_norm(psf_fft), calc_norm(torch.fft.fft2(Dx_op)), calc_norm(torch.fft.fft2(Dy_op))
 
+def ct(b):
+    h1 = b.shape[-2] // 2
+    w1 = b.shape[-1] // 2
+    pad_b = torch.zeros((b.shape[0], b.shape[1], b.shape[2] * 2, b.shape[3] * 2), dtype=b.dtype, device=b.device)
+    pad_b[:, :, h1:h1 + b.shape[-2], w1:w1 + b.shape[-1]] = b
+    return pad_b, h1, w1
+
 def make_iteration(x, al1, al2_x, al2_y, al3, psf_fft, b, us, tau, norm_psf, norm_dx, norm_dy):
     reverse_op = (norm_psf * us[0] + norm_dx * us[1] + norm_dy * us[2] + us[3])
     u_x = soft_threshold(Dx(x) + al2_x / us[1], tau / us[1])
     u_y = soft_threshold(Dy(x) + al2_y / us[2], tau / us[2])
-    v = (al1 + H(psf_fft, x) * us[0] + b) / (1 + us[0])
+    mask = ct(torch.ones_like(b))
+    v = (al1 + H(psf_fft, x) * us[0] + ct(b)) / (mask + us[0])
     w = torch.clamp(al3 / us[3] + x, 0)
     r = (
         (us[3] * w - al3)

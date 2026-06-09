@@ -7,9 +7,9 @@ from torchmetrics.functional.image import (
 from torchmetrics.functional.image.lpips import (
     learned_perceptual_image_patch_similarity,
 )
-
+from pathlib import Path
 from src.metrics.base_metric import BaseMetric
-from src.transforms import get_roi_tensors
+from src.transforms.lenslees_helpers import get_roi_tensors
 import matplotlib.pyplot as plt
 
 class ImageMetric(BaseMetric):
@@ -33,8 +33,14 @@ class ImageMetric(BaseMetric):
                 assert False, f"Bad metric {metric}"
 
     def __call__(self, reconstructed, lensed, **batch):
-        plt.imshow(reconstructed[0].cpu().numpy())
-        plt.imshow(lensed[0].cpu().numpy())
+        plt.imshow(reconstructed[0].permute((1, 2, 0)).cpu().numpy())
+        Path("/content/saved").mkdir(parents=True, exist_ok=True)
+        plt.savefig("/content/saved/debug2", bbox_inches="tight", pad_inches=0)
+        plt.close()
+        plt.imshow(lensed[0].permute((1, 2, 0)).cpu().numpy())
+        Path("/content/saved").mkdir(parents=True, exist_ok=True)
+        plt.savefig("/content/saved/debug", bbox_inches="tight", pad_inches=0)
+        plt.close()
         reconstructed_roi = get_roi_tensors(reconstructed)
         lensed_roi = get_roi_tensors(lensed)
 
