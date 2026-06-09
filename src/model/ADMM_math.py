@@ -51,8 +51,8 @@ def ct(b):
 
 def make_iteration(x, al1, al2_x, al2_y, al3, psf_fft, b, us, tau, norm_psf, norm_dx, norm_dy):
     reverse_op = (norm_psf * us[0] + norm_dx * us[1] + norm_dy * us[2] + us[3])
-    u_x = soft_threshold(Dx(x) + al2_x / us[1], tau / us[1])
-    u_y = soft_threshold(Dy(x) + al2_y / us[2], tau / us[2])
+    u_x = soft_threshold(Dx(x) + al2_x / us[1], tau)
+    u_y = soft_threshold(Dy(x) + al2_y / us[2], tau)
     mask = ct(torch.ones_like(b))
     v = (al1 + H(psf_fft, x) * us[0] + ct(b)) / (mask + us[0])
     w = torch.clamp(al3 / us[3] + x, 0)
@@ -63,10 +63,10 @@ def make_iteration(x, al1, al2_x, al2_y, al3, psf_fft, b, us, tau, norm_psf, nor
         + H_T(psf_fft, us[0] * v - al1)
     )
     x_n = torch.fft.ifft2(torch.fft.fft2(r) / reverse_op).real
-    al1 += us[0] * (H(psf_fft, x_n) - v)
-    al2_x += us[1] * (Dx(x_n) - u_x)
-    al2_y += us[2] * (Dy(x_n) - u_y)
-    al3 += us[3] * (x_n - w)
+    al1 = al1 +  us[0] * (H(psf_fft, x_n) - v)
+    al2_x = al2_x + us[1] * (Dx(x_n) - u_x)
+    al2_y = al2_y + us[2] * (Dy(x_n) - u_y)
+    al3 = al3 + us[3] * (x_n - w)
     return x_n, al1, al2_x, al2_y, al3
 
 def zero_init(psf_fft, dtype, device):
@@ -77,5 +77,10 @@ def zero_init(psf_fft, dtype, device):
     al3 = torch.zeros_like(x_0)
     return x_0, al1, al2_x, al2_y, al3
 
+
+def check_H(lensed, psf_fft):
+    lensed = ct(lensed) 
+    out = H(psf_fft, lensed)
+    return out
 
 
