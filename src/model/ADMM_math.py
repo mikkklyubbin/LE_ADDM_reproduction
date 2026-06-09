@@ -47,7 +47,7 @@ def ct(b):
     w1 = b.shape[-1] // 2
     pad_b = torch.zeros((b.shape[0], b.shape[1], b.shape[2] * 2, b.shape[3] * 2), dtype=b.dtype, device=b.device)
     pad_b[:, :, h1:h1 + b.shape[-2], w1:w1 + b.shape[-1]] = b
-    return pad_b, h1, w1
+    return pad_b
 
 def make_iteration(x, al1, al2_x, al2_y, al3, psf_fft, b, us, tau, norm_psf, norm_dx, norm_dy):
     reverse_op = (norm_psf * us[0] + norm_dx * us[1] + norm_dy * us[2] + us[3])

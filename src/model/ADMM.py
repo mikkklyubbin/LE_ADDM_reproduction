@@ -36,6 +36,7 @@ class ADMM(nn.Module):
         b = lensless.to(device)
         psf = psf.to(device)
         psf, h1, w1 = pad_psf(psf)
+        psf = psf / psf.abs().max()
         psf = torch.fft.ifftshift(psf, dim=(-2, -1))
         psf_fft = torch.fft.fft2(psf)
         x_0, al1, al2_x, al2_y, al3 = zero_init(psf_fft, dtype, device)
