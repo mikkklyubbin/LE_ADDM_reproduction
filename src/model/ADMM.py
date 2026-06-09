@@ -1,14 +1,21 @@
 import torch
 from torch import nn
-from src.model.ADMM_math import make_iteration, calc_norms, zero_init
+
+from src.model.ADMM_math import calc_norms, make_iteration, zero_init
 
 
 def pad_psf(psf):
     h1 = psf.shape[-2] // 2
     w1 = psf.shape[-1] // 2
-    pad_psf = torch.zeros((psf.shape[0], psf.shape[1], psf.shape[2] * 2, psf.shape[3] * 2), dtype=psf.dtype, device=psf.device)
-    pad_psf[:, :, h1:h1 + psf.shape[-2], w1:w1 + psf.shape[-1]] = psf
+    pad_psf = torch.zeros(
+        (psf.shape[0], psf.shape[1], psf.shape[2] * 2, psf.shape[3] * 2),
+        dtype=psf.dtype,
+        device=psf.device,
+    )
+    pad_psf[:, :, h1 : h1 + psf.shape[-2], w1 : w1 + psf.shape[-1]] = psf
     return pad_psf, h1, w1
+
+
 class ADMM(nn.Module):
     def __init__(self, num_its=100, tau=2 * 1e-4, us=1e-4) -> None:
         super().__init__()
@@ -29,15 +36,27 @@ class ADMM(nn.Module):
         b = lensless.to(device)
         psf = psf.to(device)
         psf, h1, w1 = pad_psf(psf)
+        psf = torch.fft.ifftshift(psf, dim=(-2, -1))
         psf_fft = torch.fft.fft2(psf)
         x_0, al1, al2_x, al2_y, al3 = zero_init(psf_fft, dtype, device)
         norm_psf, norm_dx, norm_dy = calc_norms(x_0, psf_fft)
         for i in range(self.num_its):
             x_0, al1, al2_x, al2_y, al3 = make_iteration(
-                x_0, al1, al2_x, al2_y, al3, psf_fft, b, self.us, self.tau, norm_psf, norm_dx, norm_dy
+                x_0,
+                al1,
+                al2_x,
+                al2_y,
+                al3,
+                psf_fft,
+                b,
+                self.us,
+                self.tau,
+                norm_psf,
+                norm_dx,
+                norm_dy,
             )
         print(x_0.shape)
-        x_0 = x_0[:, :, h1:h1 + lensless.shape[-2], w1:w1 + lensless.shape[-1]]
+        x_0 = x_0[:, :, h1 : h1 + lensless.shape[-2], w1 : w1 + lensless.shape[-1]]
         x_0 = torch.clamp(x_0, 0, 1)
         return {"reconstructed": x_0}
 
@@ -57,8 +76,6 @@ class ADMM(nn.Module):
         return result_info
 
 
-
-
 class leADMM(nn.Module):
     def __init__(self, num_its=20) -> None:
         super().__init__()
@@ -66,19 +83,29 @@ class leADMM(nn.Module):
         self.tau = torch.zeros(num_its, requires_grad=True)
         self.num_its = num_its
 
-
-
     def forward(self, lensless, psf, **batch):
         dtype = lensless.dtype
         device = self.device
         b = lensless.to(device)
         psf = psf.to(device)
+        psf = torch.fft.fftshift(psf, dim=(-2, -1))
         psf_fft = torch.fft.fft2(psf)
         x_0, al1, al2_x, al2_y, al3 = zero_init(psf_fft, dtype, device)
         norm_psf, norm_dx, norm_dy = calc_norms(x_0, psf_fft)
         for i in range(self.num_its):
             x_0, al1, al2_x, al2_y, al3 = make_iteration(
-                x_0, al1, al2_x, al2_y, al3, psf_fft, b, self.us[i], self.tau[i], norm_psf, norm_dx, norm_dy
+                x_0,
+                al1,
+                al2_x,
+                al2_y,
+                al3,
+                psf_fft,
+                b,
+                self.us[i],
+                self.tau[i],
+                norm_psf,
+                norm_dx,
+                norm_dy,
             )
         return {"reconstructed": x_0}
 
