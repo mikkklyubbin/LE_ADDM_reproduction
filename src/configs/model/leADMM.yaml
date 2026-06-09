@@ -1,2 +1,4 @@
-_target_: src.model.leADMM
+_target_: src.model.ADMM_plus_DRU
 num_its: 20
+pred: False
+post: False

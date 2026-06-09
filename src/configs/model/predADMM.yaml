@@ -1,0 +1,5 @@
+_target_: src.model.ADMM_plus_DRU
+num_its: 5
+pred: True
+dru_channels: [32, 64, 128, 256]
+post: False

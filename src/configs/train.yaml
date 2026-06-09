@@ -4,7 +4,7 @@ defaults:
   - metrics: digi
   - datasets: train_digicam
   - dataloader: example
-  - transforms: example
+  - transforms: digi_trans
   - _self_
 optimizer:
   _target_: torch.optim.Adam

@@ -24,6 +24,7 @@ class Inferencer(BaseTrainer):
         metrics=None,
         batch_transforms=None,
         skip_model_load=False,
+        names_for_save = [],
     ):
         """
         Initialize the Inferencer.
@@ -53,7 +54,7 @@ class Inferencer(BaseTrainer):
 
         self.config = config
         self.cfg_trainer = self.config.inferencer
-
+        self.names_for_save = names_for_save
         self.device = device
 
         self.model = model
@@ -125,7 +126,17 @@ class Inferencer(BaseTrainer):
         if metrics is not None:
             for met in self.metrics["inference"]:
                 metrics.update(met.name, met(**batch))
+        batch_size = batch["id"].shape[0]
+        current_id = batch_idx * batch_size
 
+        for i in range(batch_size):
+            # clone because of
+            # https://github.com/pytorch/pytorch/issues/1995
+            for name in  self.names_for_save:
+                data = batch[name][i].clone()
+                label = batch["id"][i].clone()
+                if self.save_path is not None:
+                    torch.save({name: data, "id": label}, self.save_path / name / f"output_{label}.pth")
         return batch
 
     def _inference_part(self, part, dataloader):

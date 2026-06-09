@@ -80,7 +80,7 @@ class DigiCamDataset(BaseDataset):
             torch.save(ds[i]["lensed"], path_lensed)
 
             # parse dataset metadata and append it to index
-            index.append({"path": str(obj_path), "mask_label": ds[i]["mask_label"]})
+            index.append({"path": str(obj_path), "mask_label": ds[i]["mask_label"], "id": i})
 
         masks = snapshot_download(
             repo_id=DATASET_ID,
@@ -128,7 +128,7 @@ class DigiCamDataset(BaseDataset):
         data_path = data_dict["path"]
         data_object = self.load_object(data_path)
         data_label = data_dict["mask_label"]
-        data_object.update({"mask_label": data_label})
+        data_object.update({"mask_label": data_label, "id": data_dict["id"]})
 
         instance_data = data_object
         instance_data = self.preprocess_data(instance_data)
