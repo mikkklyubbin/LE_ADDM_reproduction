@@ -44,7 +44,7 @@ class ADMM(nn.Module):
         psf = psf.to(device)
         psf, h1, w1 = pad_psf(psf)
         psf = psf.clamp_min(0)
-        # psf = 4 * psf / psf.sum(dim=(-2, -1), keepdim=True)
+        psf = 5 * psf / psf.sum(dim=(-2, -1), keepdim=True)
         psf = torch.fft.ifftshift(psf, dim=(-2, -1))
         psf_fft = torch.fft.fft2(psf)
         if ("lensed" in batch) :
@@ -120,8 +120,12 @@ class leADMM(nn.Module):
     def forward(self, lensless, psf, **batch):
         dtype = lensless.dtype
         device = self.device
-        b = lensless
-        psf = torch.fft.fftshift(psf, dim=(-2, -1))
+        b = lensless.to(device)
+        psf = psf.to(device)
+        psf, h1, w1 = pad_psf(psf)
+        psf = psf.clamp_min(0)
+        psf = 5 * psf / psf.sum(dim=(-2, -1), keepdim=True)
+        psf = torch.fft.ifftshift(psf, dim=(-2, -1))
         psf_fft = torch.fft.fft2(psf)
         x_0, al1, al2_x, al2_y, al3 = zero_init(psf_fft, dtype, device)
         norm_psf, norm_dx, norm_dy = calc_norms(x_0, psf_fft)
@@ -134,12 +138,14 @@ class leADMM(nn.Module):
                 al3,
                 psf_fft,
                 b,
-                self.us[i],
+                torch.clamp(self.us[i], min=1e-5),
                 self.tau[i],
                 norm_psf,
                 norm_dx,
                 norm_dy,
             )
+        x_0 = x_0[:, :, h1 : h1 + lensless.shape[-2], w1 : w1 + lensless.shape[-1]]
+        x_0 = torch.clamp(x_0, 0, 1)
         return {"reconstructed": x_0}
 
     def __str__(self):

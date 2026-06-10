@@ -52,7 +52,9 @@ class DecoderBlock(nn.Module):
 class Drunet(nn.Module):
     def __init__(self, in_channels=1, channels = [64, 128, 256], shape = (380, 507)):
         super().__init__()
-        channels = [in_channels] + channels
+        self.proj = nn.Conv2d(in_channels, channels[0], kernel_size=3, padding=1, bias=False)
+        self.proj2 = nn.Conv2d(channels[0], in_channels, kernel_size=3, padding=1, bias=False)
+        channels = channels
         cur = shape
         pads = []
         for i in range(len(channels) - 1):
@@ -75,6 +77,7 @@ class Drunet(nn.Module):
         self.layers = len(channels) - 1
 
     def forward(self, x):
+        x = self.proj(x)
         enc_outs = []
         for i in range(self.layers):
             x, save = self.enc[i](x)
@@ -82,4 +85,5 @@ class Drunet(nn.Module):
         x = self.midle(x)
         for i in range(self.layers):
             x = self.dec[i](x, enc_outs[self.layers - 1 - i])
+        x = self.proj2(x)
         return x
