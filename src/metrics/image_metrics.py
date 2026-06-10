@@ -16,6 +16,7 @@ class ImageMetric(BaseMetric):
     def __init__(self, name, metric, *args, **kwargs):
         super().__init__(name, *args, **kwargs)
         self.args_for_metric = {}
+        self.need_clamp = True
         if isinstance(metric, str):
             if metric == "PSNR":
                 self.metric = peak_signal_noise_ratio
@@ -28,11 +29,14 @@ class ImageMetric(BaseMetric):
                 self.args_for_metric["net_type"] = "vgg"
                 self.args_for_metric["normalize"] = True
             elif metric == "MSE":
+                self.need_clamp = False
                 self.metric = F.mse_loss
             else:
                 assert False, f"Bad metric {metric}"
 
     def __call__(self, reconstructed, lensed, **batch):
+        if self.need_clamp:
+            reconstructed = torch.clamp(reconstructed, 0, 1)
         # plt.imshow(reconstructed[0].permute((1, 2, 0)).cpu().numpy())
         # Path("/home/mik/hse/Dl/project/LE_ADDM_reproduction/data/debug").mkdir(parents=True, exist_ok=True)
         # plt.savefig("/home/mik/hse/Dl/project/LE_ADDM_reproduction/data/debug/debug2", bbox_inches="tight", pad_inches=0)

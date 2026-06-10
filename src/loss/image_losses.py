@@ -36,4 +36,5 @@ class LPIPS_loss(nn.Module):
         self.loss.to(device)
 
     def forward(self, reconstructed: torch.Tensor, lensed: torch.Tensor, **batch):
+        reconstructed = torch.clamp(reconstructed, 0, 1)
         return {"lossLPIPS": self.loss(get_roi_tensors(reconstructed), get_roi_tensors(lensed))}

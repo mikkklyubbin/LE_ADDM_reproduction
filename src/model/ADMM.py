@@ -6,6 +6,7 @@ from src.model.drunet import Drunet
 from matplotlib import pyplot as plt
 from pathlib import Path
 from src.utils.io_utils import ROOT_PATH
+import torch.nn.functional as F
 def pad_psf(psf):
     h1 = psf.shape[-2] // 2
     w1 = psf.shape[-1] // 2
@@ -138,7 +139,7 @@ class leADMM(nn.Module):
                 al3,
                 psf_fft,
                 b,
-                torch.clamp(self.us[i], min=1e-5),
+                F.softplus(self.us[i]) ,
                 self.tau[i],
                 norm_psf,
                 norm_dx,
@@ -178,4 +179,5 @@ class ADMM_plus_DRU(nn.Module):
         lensless = self.pred(lensless)
         addm_out = self.admm(lensless, psf, **batch)
         addm_out["reconstructed"] = self.post(addm_out["reconstructed"])
+        addm_out["reconstructed"] = torch.clamp(addm_out["reconstructed"], 0, 1)
         return addm_out
