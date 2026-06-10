@@ -9,79 +9,46 @@ from datasets import load_dataset
 from src.datasets.base_dataset import BaseDataset
 from src.transforms import DoubleSizes
 from src.utils.io_utils import ROOT_PATH, read_json, write_json
-
-
+from src.utils.metric_utils import load_image
+from src.transforms.initial_transforms import ChangeData
 class CustomDirDataset(BaseDataset):
 
-    def __init__(self, dataset_length, *args, **kwargs):
-        index_path = ROOT_PATH / "data" / "CustomDirDataset" / name / "index.json"
+    def __init__(self, dataset_length, data_path, *args, **kwargs):
+        if (isinstance(data_path, str)):
+            data_path = Path(data_path)
+        index_path = data_path / "index.json"
 
         # each nested dataset class must have an index field that
         # contains list of dicts. Each dict contains information about
         # the object, including label, path, etc.
+        self.data_path = data_path
         if index_path.exists():
             index = read_json(str(index_path))
         else:
-            index = self._create_index(dataset_length, name)
-        data_path = ROOT_PATH / "data" / "CustomDirDataset" / name
-        self.masks = data_path / "masks"
+            index = self._create_index(dataset_length, data_path)
         super().__init__(index, *args, **kwargs)
 
-    def _create_index(self, dataset_length, name):
-        """
-        Create index for the dataset. The function processes dataset metadata
-        and utilizes it to get information dict for each element of
-        the dataset.
+    def _create_index(self, dataset_length, data_path):
 
-        Args:
-            dataset_length (int): the total number of elements in
-                this random dataset.
-            name (str): partition name
-        Returns:
-            index (list[dict]): list, containing dict for each element of
-                the dataset. The dict has required metadata information,
-                such as label and object path.
-        """
 
         index = []
-        data_path = ROOT_PATH / "data" / "DigiCam" / name
         data_path.mkdir(exist_ok=True, parents=True)
-        DATASET_ID = "bezzam/DigiCam-Mirflickr-MultiMask-10K"
-        ds = load_dataset(DATASET_ID, split=name)
         # to get pretty object names
         if dataset_length <= 0:
-            dataset_length = len(ds)
+            dataset_length = 1e6
+        data_path = data_path / "lensless"
         number_of_zeros = int(np.log10(dataset_length)) + 1
-
-        # In this example, we create a synthesized dataset. However, in real
-        # tasks, you should process dataset metadata and append it
-        # to index. See other branches.a
-        for i in tqdm(range(dataset_length)):
-            # create dataset
-            obj_path = data_path / f"{i: 0{number_of_zeros}d}"
-            obj_path.mkdir(exist_ok=True, parents=True)
-            path_less = data_path / f"{i: 0{number_of_zeros}d}" / "lensless.pt"
-            path_lensed = data_path / f"{i: 0{number_of_zeros}d}" / "lensed.pt"
-            torch.save(ds[i]["lensless"], path_less)
-            torch.save(ds[i]["lensed"], path_lensed)
-
-            # parse dataset metadata and append it to index
-            index.append({"path": str(obj_path), "mask_label": ds[i]["mask_label"], "id": i})
-
-        masks = snapshot_download(
-            repo_id=DATASET_ID,
-            repo_type="dataset",
-            allow_patterns="masks/*.npy",
-            local_dir=data_path,
-        )
-        self.masks = masks
-
-        # write index to disk
+        for file_path in data_path.iterdir():
+            if file_path.is_file():
+                id = int(file_path.name.split(".")[0])
+                index.append({"path": str(file_path), "id": id})
+                if  (len(index) >= dataset_length):
+                    break
         write_json(index, str(data_path / "index.json"))
 
         return index
 
-    def load_object(self, path):
+    def load_object(self, path, id):
         """
         Load object from disk.
 
@@ -90,9 +57,11 @@ class CustomDirDataset(BaseDataset):
         Returns:
             data_object (Tensor):
         """
-        lensless = torch.load(Path(path) / "lensless.pt")
-        lensed = torch.load(Path(path) / "lensed.pt")
-        data_object = {"lensless": lensless, "lensed": lensed}
+        lensless = load_image(Path(path))
+        path_mask = Path(path).parent.parent / "masks" / (str(id) + ".npy")
+        mask = np.load(path_mask)
+        lensed_fake = torch.zeros_like(lensless)
+        data_object = {"lensless": lensless, "lensed": lensed_fake, "mask": mask}
         return data_object
 
     def __getitem__(self, ind):
@@ -112,9 +81,9 @@ class CustomDirDataset(BaseDataset):
         """
         data_dict = self._index[ind]
         data_path = data_dict["path"]
-        data_object = self.load_object(data_path)
-        data_label = data_dict["mask_label"]
-        data_object.update({"mask_label": data_label, "id": data_dict["id"]})
+        data_id = data_dict["id"]
+        data_object = self.load_object(data_path, data_id)
+        data_object.update({"id": data_dict["id"]})
 
         instance_data = data_object
         instance_data = self.preprocess_data(instance_data)
@@ -135,7 +104,7 @@ class CustomDirDataset(BaseDataset):
                 (a single dataset element) (possibly transformed via
                 instance transform).
         """
-        instance_data.update(DoubleSizes(masks_root=self.masks, **instance_data))
+        instance_data.update(ChangeData(masks_root=self.masks, **instance_data))
         if self.instance_transforms is not None:
             for transform_name in self.instance_transforms.keys():
                 instance_data[transform_name] = self.instance_transforms[
