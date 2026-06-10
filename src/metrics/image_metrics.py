@@ -33,16 +33,17 @@ class ImageMetric(BaseMetric):
                 assert False, f"Bad metric {metric}"
 
     def __call__(self, reconstructed, lensed, **batch):
-        plt.imshow(reconstructed[0].permute((1, 2, 0)).cpu().numpy())
-        Path("/home/mik/hse/Dl/project/LE_ADDM_reproduction/data/debug").mkdir(parents=True, exist_ok=True)
-        plt.savefig("/home/mik/hse/Dl/project/LE_ADDM_reproduction/data/debug/debug2", bbox_inches="tight", pad_inches=0)
-        plt.close()
-        plt.imshow(lensed[0].permute((1, 2, 0)).cpu().numpy())
-        Path("/home/mik/hse/Dl/project/LE_ADDM_reproduction/data/debug").mkdir(parents=True, exist_ok=True)
-        plt.savefig("/home/mik/hse/Dl/project/LE_ADDM_reproduction/data/debug/debug", bbox_inches="tight", pad_inches=0)
-        plt.close()
-        reconstructed_roi = get_roi_tensors(reconstructed)
-        lensed_roi = get_roi_tensors(lensed)
+        # plt.imshow(reconstructed[0].permute((1, 2, 0)).cpu().numpy())
+        # Path("/home/mik/hse/Dl/project/LE_ADDM_reproduction/data/debug").mkdir(parents=True, exist_ok=True)
+        # plt.savefig("/home/mik/hse/Dl/project/LE_ADDM_reproduction/data/debug/debug2", bbox_inches="tight", pad_inches=0)
+        # plt.close()
+        # plt.imshow(lensed[0].permute((1, 2, 0)).cpu().numpy())
+        # Path("/home/mik/hse/Dl/project/LE_ADDM_reproduction/data/debug").mkdir(parents=True, exist_ok=True)
+        # plt.savefig("/home/mik/hse/Dl/project/LE_ADDM_reproduction/data/debug/debug", bbox_inches="tight", pad_inches=0)
+        # plt.close()
+
+        reconstructed_roi = get_roi_tensors(reconstructed).detach()
+        lensed_roi = get_roi_tensors(lensed).detach()
         met = self.metric(reconstructed_roi, lensed_roi, **self.args_for_metric).item()
         print(f"{self.name}: {met}")
         return met

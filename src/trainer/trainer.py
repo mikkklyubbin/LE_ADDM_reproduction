@@ -75,5 +75,5 @@ class Trainer(BaseTrainer):
             # Log Stuff
             pass
         else:
-            # Log Stuff
-            pass
+            self.writer.add_image("GT image", batch["lensed"][0], self.global_step)
+            self.writer.add_image("reconstructed", batch["reconstructed"][0], self.global_step)
