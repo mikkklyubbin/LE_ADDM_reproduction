@@ -21,7 +21,7 @@ def download_and_unpack(url, save_path):
     gdown.download(url, str(save_path / "arc.zip"), fuzzy=True, quiet=False)
 
     with zipfile.ZipFile(save_path / "arc.zip", "r") as zip_file:
-        zip_file.extractall(extract_dir)
+        zip_file.extractall(save_path)
 
 
 

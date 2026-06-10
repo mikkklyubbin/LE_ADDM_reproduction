@@ -44,7 +44,7 @@ def main(config):
     save_path = ROOT_PATH / "data" / "saved" / config.inferencer.save_path
     save_path.mkdir(exist_ok=True, parents=True)
     skip_model_load = config.inferencer.skip_model_load
-    name_for_save = config.inferencer.get("name_for_save", [])
+    names_for_save = config.inferencer.get("names_for_save", [])
     inferencer = Inferencer(
         model=model,
         config=config,
@@ -54,7 +54,7 @@ def main(config):
         save_path=save_path,
         metrics=metrics,
         skip_model_load=skip_model_load,
-        names_for_save=name_for_save,
+        names_for_save=names_for_save,
     )
 
     logs = inferencer.run_inference()

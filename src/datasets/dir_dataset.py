@@ -44,7 +44,7 @@ class CustomDirDataset(BaseDataset):
                 index.append({"path": str(file_path), "id": id})
                 if  (len(index) >= dataset_length):
                     break
-        write_json(index, str(data_path / "index.json"))
+        write_json(index, str(data_path.parent / "index.json"))
 
         return index
 
@@ -58,6 +58,8 @@ class CustomDirDataset(BaseDataset):
             data_object (Tensor):
         """
         lensless = load_image(Path(path))
+        lensless = lensless.squeeze(0)
+        lensless = lensless.permute(1, 2, 0)
         path_mask = Path(path).parent.parent / "masks" / (str(id) + ".npy")
         mask = np.load(path_mask)
         lensed_fake = torch.zeros_like(lensless)
@@ -104,7 +106,7 @@ class CustomDirDataset(BaseDataset):
                 (a single dataset element) (possibly transformed via
                 instance transform).
         """
-        instance_data.update(ChangeData(masks_root=self.masks, **instance_data))
+        instance_data.update(ChangeData(**instance_data))
         if self.instance_transforms is not None:
             for transform_name in self.instance_transforms.keys():
                 instance_data[transform_name] = self.instance_transforms[

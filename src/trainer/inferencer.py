@@ -132,11 +132,14 @@ class Inferencer(BaseTrainer):
         for i in range(batch_size):
             # clone because of
             # https://github.com/pytorch/pytorch/issues/1995
+            print(self.names_for_save)
             for name in  self.names_for_save:
                 data = batch[name][i].clone()
                 label = batch["id"][i].clone()
                 if self.save_path is not None:
-                    torch.save({name: data, "id": label}, ROOT_PATH / data / self.save_path / name / f"output_{label}.pth")
+                    dr_path = ROOT_PATH / "data" / self.save_path / name
+                    dr_path.mkdir(exist_ok=True, parents=True)
+                    torch.save({name: data, "id": label}, ROOT_PATH / "data" / self.save_path / name / f"output_{label}.pth")
         return batch
 
     def _inference_part(self, part, dataloader):

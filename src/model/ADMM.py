@@ -52,15 +52,6 @@ class ADMM(nn.Module):
         psf = 5 * psf / psf.sum(dim=(-2, -1), keepdim=True)
         psf = torch.fft.ifftshift(psf, dim=(-2, -1))
         psf_fft = torch.fft.fft2(psf)
-        if ("lensed" in batch) :
-            print(batch["lensed"].abs().max())
-            print(b.abs().max())
-            print(lensless.abs().max())
-            rec_less = check_H(batch["lensed"].to(device), psf_fft)
-            save_img(rec_less[0].permute((1, 2, 0)).cpu().numpy(), "check_H")
-            rec_less = rec_less[:, :, h1 : h1 + lensless.shape[-2], w1 : w1 + lensless.shape[-1]]
-            save_img(b[0].permute((1, 2, 0)).cpu().numpy(), "lensless")
-            print((rec_less - b).abs().mean())
         x_0, al1, al2_x, al2_y, al3 = zero_init(psf_fft, dtype, device)
         norm_psf, norm_dx, norm_dy = calc_norms(x_0, psf_fft)
         for i in range(self.num_its):
@@ -78,20 +69,7 @@ class ADMM(nn.Module):
                 norm_dx,
                 norm_dy,
             )
-        print(x_0.shape)
-        print(x_0.max())
-        plt.imshow(x_0[0].permute((1, 2, 0)).cpu().numpy())
-        Path("/home/mik/hse/Dl/project/LE_ADDM_reproduction/data/debug").mkdir(parents=True, exist_ok=True)
-        plt.savefig("/home/mik/hse/Dl/project/LE_ADDM_reproduction/data/debug/debug3", bbox_inches="tight", pad_inches=0)
-        plt.close()
         x_0 = x_0[:, :, h1 : h1 + lensless.shape[-2], w1 : w1 + lensless.shape[-1]]
-        img = x_0[0].detach().cpu()
-        img = img - img.min()
-        img = img / (img.max() + 1e-8)
-        plt.imshow(img.permute((1, 2, 0)).numpy())
-        Path("/home/mik/hse/Dl/project/LE_ADDM_reproduction/data/debug").mkdir(parents=True, exist_ok=True)
-        plt.savefig("/home/mik/hse/Dl/project/LE_ADDM_reproduction/data/debug/debug4", bbox_inches="tight", pad_inches=0)
-        plt.close()
         return {"reconstructed": x_0}
 
     def __str__(self):
