@@ -1,5 +1,5 @@
 _target_: src.model.ADMM_plus_DRU
 num_its: 5
 use_start: False
-dru_channels: [32, 64, 128, 256]
+drunet_channels: [32, 64, 128, 256]
 use_end: True

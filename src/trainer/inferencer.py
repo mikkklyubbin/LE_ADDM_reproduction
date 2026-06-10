@@ -3,7 +3,7 @@ from tqdm.auto import tqdm
 
 from src.metrics.tracker import MetricTracker
 from src.trainer.base_trainer import BaseTrainer
-
+from src.utils.io_utils import ROOT_PATH
 
 class Inferencer(BaseTrainer):
     """
@@ -136,7 +136,7 @@ class Inferencer(BaseTrainer):
                 data = batch[name][i].clone()
                 label = batch["id"][i].clone()
                 if self.save_path is not None:
-                    torch.save({name: data, "id": label}, self.save_path / name / f"output_{label}.pth")
+                    torch.save({name: data, "id": label}, ROOT_PATH / data / self.save_path / name / f"output_{label}.pth")
         return batch
 
     def _inference_part(self, part, dataloader):

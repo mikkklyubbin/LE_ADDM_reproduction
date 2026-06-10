@@ -26,7 +26,7 @@ def collate_fn(dataset_items: list[dict]):
     result_batch["psf"] = torch.stack(
         [elem["psf"] for elem in dataset_items]
     )
-    result_batch["id"] = torch.stack(
+    result_batch["id"] = torch.tensor(
         [elem["id"] for elem in dataset_items]
     )
     # result_batch["labels"] = torch.tensor([elem["labels"] for elem in dataset_items])

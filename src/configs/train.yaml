@@ -9,11 +9,15 @@ defaults:
 optimizer:
   _target_: torch.optim.Adam
   lr: 1e-4
+lr_scheduler:
+  _target_: torch.optim.lr_scheduler.StepLR
+  gamma: 1.0
+  step_size: ${trainer.epoch_len}
 loss_function:
   _target_: src.loss.LossAcum
   weights:
     lossL2: 1.0
-    lossLPIPS: 0.1
+    lossLPIPS: 1.0
   list_of_losses:
     - _target_: src.loss.MSE_loss
     - _target_: src.loss.LPIPS_loss
