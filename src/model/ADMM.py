@@ -18,6 +18,10 @@ def pad_psf(psf):
     pad_psf[:, :, h1 : h1 + psf.shape[-2], w1 : w1 + psf.shape[-1]] = psf
     return pad_psf, h1, w1
 
+def inverse_softplus(x):
+    x = torch.as_tensor(x)
+    return torch.log(torch.expm1(x))
+
 def save_img(img, name):
     plt.imshow(img)
     Path("/home/mik/hse/Dl/project/LE_ADDM_reproduction/data/debug").mkdir(parents=True, exist_ok=True)
@@ -88,7 +92,6 @@ class ADMM(nn.Module):
         Path("/home/mik/hse/Dl/project/LE_ADDM_reproduction/data/debug").mkdir(parents=True, exist_ok=True)
         plt.savefig("/home/mik/hse/Dl/project/LE_ADDM_reproduction/data/debug/debug4", bbox_inches="tight", pad_inches=0)
         plt.close()
-        x_0 = torch.clamp(x_0, 0, 1)
         return {"reconstructed": x_0}
 
     def __str__(self):
@@ -110,7 +113,7 @@ class ADMM(nn.Module):
 class leADMM(nn.Module):
     def __init__(self, num_its=20) -> None:
         super().__init__()
-        self.us = nn.Parameter(torch.zeros((num_its, 4), requires_grad=True)  + 1e-4)
+        self.us = nn.Parameter(inverse_softplus(torch.zeros((num_its, 4), requires_grad=True)  + 1e-4))
         self.tau = nn.Parameter(torch.zeros(num_its, requires_grad=True) + 2e-4)
         self.num_its = num_its
 
@@ -146,7 +149,6 @@ class leADMM(nn.Module):
                 norm_dy,
             )
         x_0 = x_0[:, :, h1 : h1 + lensless.shape[-2], w1 : w1 + lensless.shape[-1]]
-        x_0 = torch.clamp(x_0, 0, 1)
         return {"reconstructed": x_0}
 
     def __str__(self):
@@ -179,5 +181,4 @@ class ADMM_plus_DRU(nn.Module):
         lensless = self.pred(lensless)
         addm_out = self.admm(lensless, psf, **batch)
         addm_out["reconstructed"] = self.post(addm_out["reconstructed"])
-        addm_out["reconstructed"] = torch.clamp(addm_out["reconstructed"], 0, 1)
         return addm_out

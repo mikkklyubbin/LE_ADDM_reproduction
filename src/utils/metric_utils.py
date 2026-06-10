@@ -9,20 +9,19 @@ import urllib.request
 from src.transforms.lenslees_helpers.preprocessor import get_cropped_lensed
 from src.metrics.image_metrics import ImageMetric
 import zipfile
+import gdown
 def load_image(path: Path) -> torch.Tensor:
     img = Image.open(path).convert("RGB")
     x = to_tensor(img).unsqueeze(0)
     return x
 
 def download_and_unpack(url, save_path):
-    
-    urllib.request.urlretrieve(url, save_path + ".zip")
-    extract_dir = Path(save_path)
-    extract_dir.mkdir(parents=True, exist_ok=True)
+    save_path = Path(save_path)
+    save_path.mkdir(parents=True, exist_ok=True)
+    gdown.download(url, str(save_path / "arc.zip"), fuzzy=True, quiet=False)
 
-    with zipfile.ZipFile(save_path + ".zip", "r") as zip_file:
+    with zipfile.ZipFile(save_path / "arc.zip", "r") as zip_file:
         zip_file.extractall(extract_dir)
-    print("saved to:", out_path)
 
 
 

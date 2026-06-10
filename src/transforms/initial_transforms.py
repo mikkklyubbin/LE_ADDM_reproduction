@@ -14,3 +14,7 @@ def DoubleSizes(masks_root, **data):
     mask = load_mask_by_id(data["mask_label"], masks_root)
     lensed, lensless, psf = get_dataset_object(data["lensed"], data["lensless"], mask)
     return {"lensed": lensed, "lensless": lensless, "psf": psf}
+
+def ChangeData(**data):
+    lensed, lensless, psf = get_dataset_object(data["lensed"], data["lensless"], data["mask"])
+    return {"lensed": lensed, "lensless": lensless, "psf": psf}

@@ -1,0 +1,5 @@
+test:
+  _target_: src.datasets.CustomDirDataset
+  dataset_length: -1
+  data_path : "trash"
+  instance_transforms: ${transforms.instance_transforms.inference}
