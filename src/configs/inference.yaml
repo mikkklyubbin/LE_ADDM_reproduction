@@ -11,4 +11,4 @@ inferencer:
   save_path: "save_outputs" # any name here, can be a dataset name
   seed: 1
   skip_model_load: True
-  names_for_save: ["reconstructed"]
+  names_for_save: ["reconstructed", "lensless"]

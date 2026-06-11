@@ -1,5 +1,7 @@
 from src.metrics.tracker import MetricTracker
 from src.trainer.base_trainer import BaseTrainer
+from src.transforms import get_roi_tensors
+from src.transforms.for_save_transform import prepare_for_save
 
 
 class Trainer(BaseTrainer):
@@ -75,5 +77,7 @@ class Trainer(BaseTrainer):
             # Log Stuff
             pass
         else:
-            self.writer.add_image("GT image", batch["lensed"][0], self.global_step)
-            self.writer.add_image("reconstructed", batch["reconstructed"][0], self.global_step)
+            rec = prepare_for_save(batch["reconstructed"][0], is_batch=False)
+            lensed = prepare_for_save(batch["lensed"][0], is_batch=False)
+            self.writer.add_image("GT image", lensed)
+            self.writer.add_image("reconstructed", rec)

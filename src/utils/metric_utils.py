@@ -1,20 +1,25 @@
-
-from logging import root
+import urllib.request
+import zipfile
 from pathlib import Path
 
+import gdown
+import matplotlib.pyplot as plt
 import torch
 from PIL import Image
 from torchvision.transforms.functional import to_tensor
-import urllib.request
-from src.transforms.lenslees_helpers.preprocessor import get_cropped_lensed, get_roi_tensors
+
 from src.metrics.image_metrics import ImageMetric
-import zipfile
-import gdown
-import matplotlib.pyplot as plt
+from src.transforms.lenslees_helpers.preprocessor import (
+    get_cropped_lensed,
+    get_roi_tensors,
+)
+
+
 def load_image(path: Path) -> torch.Tensor:
     img = Image.open(path).convert("RGB")
     x = to_tensor(img).unsqueeze(0)
     return x
+
 
 def download_and_unpack(url, save_path):
     save_path = Path(save_path)
@@ -31,7 +36,8 @@ def show_tensor_image(x, title, ax):
     ax.imshow(x)
     ax.set_title(title)
 
-def calc_metrics(pred_path, target_path, name_of_files = "Image"):
+
+def calc_metrics(pred_path, target_path, name_of_files="Image"):
     metrics = {
         "PSNR": ImageMetric("PSNR", "PSNR"),
         "SSIM": ImageMetric("SSIM", "SSIM"),
@@ -54,15 +60,27 @@ def calc_metrics(pred_path, target_path, name_of_files = "Image"):
             id = pred["id"].item()
             img = Image.open(target_path + "/" + str(id) + ".png").convert("RGB")
             img = to_tensor(img)
-            img = get_cropped_lensed(img.permute(1, 2, 0).numpy(), pred["reconstructed"].permute(1,2,0))
+            img = get_cropped_lensed(
+                img.permute(1, 2, 0).numpy(), pred["reconstructed"].permute(1, 2, 0)
+            )
+            lensless = pred["lensless"]
             img = torch.from_numpy(img).permute(2, 0, 1).unsqueeze(0)
             print(img.shape)
             print(pred["reconstructed"].shape)
             for metric_name, metric in metrics.items():
-                data_metrics[metric_name] += metric(pred["reconstructed"].unsqueeze(0), img)
-            if (cnt < images_for_display):
-                show_tensor_image(pred["reconstructed"], f"Predicted {id}", axes[cnt, 0])
-                show_tensor_image(img.squeeze(0), f"Target {id}", axes[cnt, 1])
+                data_metrics[metric_name] += metric(
+                    pred["reconstructed"].unsqueeze(0), img
+                )
+            if cnt < images_for_display:
+                show_tensor_image(
+                    get_roi_tensors(pred["reconstructed"].unsqueeze(0)).squeeze(0),
+                    "Reconstructed",
+                    axes[cnt, 0],
+                )
+                show_tensor_image(
+                    get_roi_tensors(img).squeeze(0), "GT image", axes[cnt, 1]
+                )
+                show_tensor_image(lensless, "Lensless", axes[cnt, 2])
             cnt += 1
     for metric_name in data_metrics:
         data_metrics[metric_name] /= cnt

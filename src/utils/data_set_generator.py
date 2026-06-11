@@ -1,9 +1,12 @@
-from datasets import load_dataset
-from huggingface_hub import hf_hub_download
-from pathlib import Path
 import shutil
+from pathlib import Path
+
+from huggingface_hub import hf_hub_download
+
+from datasets import load_dataset
 from src.utils.io_utils import ROOT_PATH
-DATASET_NAME = "bezzam/DigiCam-Mirflickr-MultiMask-1K"
+
+DATASET_NAME = "bezzam/DigiCam-Mirflickr-MultiMask-10K"
 OUT_DIR = ROOT_PATH / "new_dataset"
 N = 8
 
@@ -18,7 +21,7 @@ ds = load_dataset(DATASET_NAME, split=f"test[:{N}]")
 
 for i, sample in enumerate(ds):
     id = str(i)
-    
+
     lensless = sample["lensless"]
     lensed = sample["lensed"]
     mask_label = sample["mask_label"]

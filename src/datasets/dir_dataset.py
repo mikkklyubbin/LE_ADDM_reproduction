@@ -3,18 +3,20 @@ from pathlib import Path
 import numpy as np
 import torch
 from huggingface_hub import hf_hub_download, snapshot_download
+from PIL import Image
 from tqdm.auto import tqdm
 
 from datasets import load_dataset
 from src.datasets.base_dataset import BaseDataset
 from src.transforms import DoubleSizes
+from src.transforms.initial_transforms import ChangeData
 from src.utils.io_utils import ROOT_PATH, read_json, write_json
 from src.utils.metric_utils import load_image
-from src.transforms.initial_transforms import ChangeData
-class CustomDirDataset(BaseDataset):
 
+
+class CustomDirDataset(BaseDataset):
     def __init__(self, dataset_length, data_path, *args, **kwargs):
-        if (isinstance(data_path, str)):
+        if isinstance(data_path, str):
             data_path = Path(data_path)
         index_path = data_path / "index.json"
 
@@ -29,20 +31,17 @@ class CustomDirDataset(BaseDataset):
         super().__init__(index, *args, **kwargs)
 
     def _create_index(self, dataset_length, data_path):
-
-
         index = []
         data_path.mkdir(exist_ok=True, parents=True)
         # to get pretty object names
         if dataset_length <= 0:
             dataset_length = 1e6
         data_path = data_path / "lensless"
-        number_of_zeros = int(np.log10(dataset_length)) + 1
         for file_path in data_path.iterdir():
             if file_path.is_file():
                 id = int(file_path.name.split(".")[0])
                 index.append({"path": str(file_path), "id": id})
-                if  (len(index) >= dataset_length):
+                if len(index) >= dataset_length:
                     break
         write_json(index, str(data_path.parent / "index.json"))
 
@@ -57,12 +56,10 @@ class CustomDirDataset(BaseDataset):
         Returns:
             data_object (Tensor):
         """
-        lensless = load_image(Path(path))
-        lensless = lensless.squeeze(0)
-        lensless = lensless.permute(1, 2, 0)
+        lensless = Image.open(path).convert("RGB")
         path_mask = Path(path).parent.parent / "masks" / (str(id) + ".npy")
         mask = np.load(path_mask)
-        lensed_fake = torch.zeros_like(lensless)
+        lensed_fake = np.zeros_like(lensless)
         data_object = {"lensless": lensless, "lensed": lensed_fake, "mask": mask}
         return data_object
 
