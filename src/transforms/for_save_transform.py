@@ -11,6 +11,6 @@ def prepare_for_save(
     if need_roi:
         data = get_roi_tensors(data)
     data = data.squeeze(0).cpu().clamp(0, 1)
-    if not channel_first:
+    if channel_first:
         data = data.permute(1, 2, 0)
     return data
