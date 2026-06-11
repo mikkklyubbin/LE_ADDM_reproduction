@@ -5,6 +5,7 @@ from src.metrics.tracker import MetricTracker
 from src.trainer.base_trainer import BaseTrainer
 from src.utils.io_utils import ROOT_PATH
 
+
 class Inferencer(BaseTrainer):
     """
     Inferencer (Like Trainer but for Inference) class
@@ -24,7 +25,7 @@ class Inferencer(BaseTrainer):
         metrics=None,
         batch_transforms=None,
         skip_model_load=False,
-        names_for_save = [],
+        names_for_save=[],
     ):
         """
         Initialize the Inferencer.
@@ -127,19 +128,24 @@ class Inferencer(BaseTrainer):
             for met in self.metrics["inference"]:
                 metrics.update(met.name, met(**batch))
         batch_size = batch["id"].shape[0]
-        current_id = batch_idx * batch_size
 
         for i in range(batch_size):
             # clone because of
             # https://github.com/pytorch/pytorch/issues/1995
-            print(self.names_for_save)
-            for name in  self.names_for_save:
+            for name in self.names_for_save:
                 data = batch[name][i].clone()
                 label = batch["id"][i].clone()
                 if self.save_path is not None:
                     dr_path = ROOT_PATH / "data" / self.save_path / name
                     dr_path.mkdir(exist_ok=True, parents=True)
-                    torch.save({name: data, "id": label}, ROOT_PATH / "data" / self.save_path / name / f"output_{label}.pth")
+                    torch.save(
+                        {name: data, "id": label},
+                        ROOT_PATH
+                        / "data"
+                        / self.save_path
+                        / name
+                        / f"output_{label}.pth",
+                    )
         return batch
 
     def _inference_part(self, part, dataloader):

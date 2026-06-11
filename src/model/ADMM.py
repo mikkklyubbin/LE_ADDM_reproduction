@@ -1,12 +1,15 @@
+from pathlib import Path
+
 import torch
+import torch.nn.functional as F
+from matplotlib import pyplot as plt
 from torch import nn
 
-from src.model.ADMM_math import calc_norms, make_iteration, zero_init, check_H
+from src.model.ADMM_math import calc_norms, check_H, make_iteration, zero_init
 from src.model.drunet import Drunet
-from matplotlib import pyplot as plt
-from pathlib import Path
 from src.utils.io_utils import ROOT_PATH
-import torch.nn.functional as F
+
+
 def pad_psf(psf):
     h1 = psf.shape[-2] // 2
     w1 = psf.shape[-1] // 2
@@ -18,15 +21,22 @@ def pad_psf(psf):
     pad_psf[:, :, h1 : h1 + psf.shape[-2], w1 : w1 + psf.shape[-1]] = psf
     return pad_psf, h1, w1
 
+
 def inverse_softplus(x):
     x = torch.as_tensor(x)
     return torch.log(torch.expm1(x))
 
+
 def save_img(img, name):
     plt.imshow(img)
-    Path("/home/mik/hse/Dl/project/LE_ADDM_reproduction/data/debug").mkdir(parents=True, exist_ok=True)
-    plt.savefig( str(ROOT_PATH) + f"/data/debug/{name}", bbox_inches="tight", pad_inches=0)
+    Path("/home/mik/hse/Dl/project/LE_ADDM_reproduction/data/debug").mkdir(
+        parents=True, exist_ok=True
+    )
+    plt.savefig(
+        str(ROOT_PATH) + f"/data/debug/{name}", bbox_inches="tight", pad_inches=0
+    )
     plt.close()
+
 
 class ADMM(nn.Module):
     def __init__(self, num_its=100, tau=2 * 1e-4, us=1e-4) -> None:
@@ -41,8 +51,6 @@ class ADMM(nn.Module):
         return self._device_indicator.device
 
     def forward(self, lensless, psf, **batch):
-        print(lensless.shape)
-        print(psf.shape)
         dtype = lensless.dtype
         device = self.device
         b = lensless.to(device)
@@ -91,7 +99,9 @@ class ADMM(nn.Module):
 class leADMM(nn.Module):
     def __init__(self, num_its=20) -> None:
         super().__init__()
-        self.us = nn.Parameter(inverse_softplus(torch.zeros((num_its, 4), requires_grad=True)  + 1e-4))
+        self.us = nn.Parameter(
+            inverse_softplus(torch.zeros((num_its, 4), requires_grad=True) + 1e-4)
+        )
         self.tau = nn.Parameter(torch.zeros(num_its, requires_grad=True) + 2e-4)
         self.num_its = num_its
 
@@ -120,7 +130,7 @@ class leADMM(nn.Module):
                 al3,
                 psf_fft,
                 b,
-                F.softplus(self.us[i]) ,
+                F.softplus(self.us[i]),
                 self.tau[i],
                 norm_psf,
                 norm_dx,
@@ -144,8 +154,11 @@ class leADMM(nn.Module):
 
         return result_info
 
+
 class ADMM_plus_DRU(nn.Module):
-    def __init__(self, num_its=20, drunet_channels = [64, 128, 256], use_start = False, use_end = False) -> None:
+    def __init__(
+        self, num_its=20, drunet_channels=[64, 128, 256], use_start=False, use_end=False
+    ) -> None:
         super().__init__()
         self.admm = leADMM(num_its)
         self.pred = nn.Identity()

@@ -57,16 +57,15 @@ def calc_metrics(pred_path, target_path, name_of_files="Image"):
     for file_path in root.iterdir():
         if file_path.is_file():
             pred = torch.load(file_path)
+            pred2 = torch.load(file_path.parent.parent / "lensless" / file_path.name)
             id = pred["id"].item()
             img = Image.open(target_path + "/" + str(id) + ".png").convert("RGB")
             img = to_tensor(img)
             img = get_cropped_lensed(
                 img.permute(1, 2, 0).numpy(), pred["reconstructed"].permute(1, 2, 0)
             )
-            lensless = pred["lensless"]
+            lensless = pred2["lensless"]
             img = torch.from_numpy(img).permute(2, 0, 1).unsqueeze(0)
-            print(img.shape)
-            print(pred["reconstructed"].shape)
             for metric_name, metric in metrics.items():
                 data_metrics[metric_name] += metric(
                     pred["reconstructed"].unsqueeze(0), img

@@ -1,3 +1,6 @@
+from pathlib import Path
+
+import matplotlib.pyplot as plt
 import torch
 import torch.nn.functional as F
 from torchmetrics.functional.image import (
@@ -7,10 +10,10 @@ from torchmetrics.functional.image import (
 from torchmetrics.functional.image.lpips import (
     learned_perceptual_image_patch_similarity,
 )
-from pathlib import Path
+
 from src.metrics.base_metric import BaseMetric
 from src.transforms.lenslees_helpers import get_roi_tensors
-import matplotlib.pyplot as plt
+
 
 class ImageMetric(BaseMetric):
     def __init__(self, name, metric, *args, **kwargs):
@@ -49,5 +52,4 @@ class ImageMetric(BaseMetric):
         reconstructed_roi = get_roi_tensors(reconstructed).detach()
         lensed_roi = get_roi_tensors(lensed).detach()
         met = self.metric(reconstructed_roi, lensed_roi, **self.args_for_metric).item()
-        print(f"{self.name}: {met}")
         return met
