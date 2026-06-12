@@ -17,7 +17,7 @@ loss_function:
   _target_: src.loss.LossAcum
   weights:
     lossL2: 1.0
-    lossLPIPS: 1.0
+    lossLPIPS: 0.1
   list_of_losses:
     - _target_: src.loss.MSE_loss
     - _target_: src.loss.LPIPS_loss

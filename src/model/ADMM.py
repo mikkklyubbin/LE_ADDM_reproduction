@@ -102,7 +102,9 @@ class leADMM(nn.Module):
         self.us = nn.Parameter(
             inverse_softplus(torch.zeros((num_its, 4), requires_grad=True) + 1e-4)
         )
-        self.tau = nn.Parameter(torch.zeros(num_its, requires_grad=True) + 2e-4)
+        self.tau = nn.Parameter(
+            inverse_softplus(torch.zeros(num_its, requires_grad=True) + 2e-4)
+        )
         self.num_its = num_its
 
     @property
@@ -131,7 +133,7 @@ class leADMM(nn.Module):
                 psf_fft,
                 b,
                 F.softplus(self.us[i]),
-                self.tau[i],
+                F.softplus(self.tau[i]),
                 norm_psf,
                 norm_dx,
                 norm_dy,
