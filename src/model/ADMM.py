@@ -14,19 +14,8 @@ from src.model.ADMM_math import (
     zero_init,
 )
 from src.model.drunet import Drunet
+from src.transforms.tensor_transforms import psf_prepare
 from src.utils.io_utils import ROOT_PATH
-
-
-def pad_psf(psf):
-    h1 = psf.shape[-2] // 2
-    w1 = psf.shape[-1] // 2
-    pad_psf = torch.zeros(
-        (psf.shape[0], psf.shape[1], psf.shape[2] * 2, psf.shape[3] * 2),
-        dtype=psf.dtype,
-        device=psf.device,
-    )
-    pad_psf[:, :, h1 : h1 + psf.shape[-2], w1 : w1 + psf.shape[-1]] = psf
-    return pad_psf, h1, w1
 
 
 def inverse_softplus(x):
@@ -57,16 +46,17 @@ class ADMM(nn.Module):
     def device(self):
         return self._device_indicator.device
 
-    def forward(self, lensless, psf, **batch):
+    def forward(self, lensless, **batch):
         dtype = lensless.dtype
         device = self.device
         b = lensless.to(device)
-        psf = psf.to(device)
-        psf, h1, w1 = pad_psf(psf)
-        psf = psf.clamp_min(0)
-        psf = 5 * psf / psf.sum(dim=(-2, -1), keepdim=True)
-        psf = torch.fft.ifftshift(psf, dim=(-2, -1))
-        psf_fft = torch.fft.fft2(psf)
+        if "psf_fft" not in batch:
+            psf = batch["psf"].to(device)
+            psf_fft, h1, w1 = psf_prepare(psf)
+        else:
+            psf_fft = batch["psf_fft"].to(device)
+            h1 = psf_fft.shape[-2] // 4
+            w1 = psf_fft.shape[-1] // 4
         x_0, al1, al2_x, al2_y, al3 = zero_init(psf_fft, dtype, device)
         norm_psf, norm_dx, norm_dy = calc_norms(x_0, psf_fft)
         ctb = ct(b)
@@ -125,16 +115,17 @@ class leADMM(nn.Module):
     def device(self):
         return self.us.device
 
-    def forward(self, lensless, psf, **batch):
+    def forward(self, lensless, **batch):
         dtype = lensless.dtype
         device = self.device
         b = lensless.to(device)
-        psf = psf.to(device)
-        psf, h1, w1 = pad_psf(psf)
-        psf = psf.clamp_min(0)
-        psf = 5 * psf / psf.sum(dim=(-2, -1), keepdim=True)
-        psf = torch.fft.ifftshift(psf, dim=(-2, -1))
-        psf_fft = torch.fft.fft2(psf)
+        if "psf_fft" not in batch:
+            psf = batch["psf"].to(device)
+            psf_fft, h1, w1 = psf_prepare(psf)
+        else:
+            psf_fft = batch["psf_fft"].to(device)
+            h1 = psf_fft.shape[-2] // 4
+            w1 = psf_fft.shape[-1] // 4
         x_0, al1, al2_x, al2_y, al3 = zero_init(psf_fft, dtype, device)
         ctb = ct(b)
         mask = ct(torch.ones_like(b))
@@ -193,8 +184,8 @@ class ADMM_plus_DRU(nn.Module):
         if use_end:
             self.post = Drunet(in_channels=3, channels=drunet_channels)
 
-    def forward(self, lensless, psf, **batch):
+    def forward(self, lensless, **batch):
         lensless = self.pred(lensless)
-        addm_out = self.admm(lensless, psf, **batch)
+        addm_out = self.admm(lensless, **batch)
         addm_out["reconstructed"] = self.post(addm_out["reconstructed"])
         return addm_out

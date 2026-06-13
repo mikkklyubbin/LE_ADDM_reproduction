@@ -8,6 +8,7 @@ from tqdm.auto import tqdm
 from datasets import load_dataset
 from src.datasets.base_dataset import BaseDataset
 from src.transforms import DoubleSizes
+from src.transforms.tensor_transforms import psf_prepare
 from src.utils.io_utils import ROOT_PATH, read_json, write_json
 
 
@@ -33,12 +34,21 @@ class DigiCamDataset(BaseDataset):
         # each nested dataset class must have an index field that
         # contains list of dicts. Each dict contains information about
         # the object, including label, path, etc.
-        if index_path.exists():
-            index = read_json(str(index_path))
-        else:
-            index = self._create_index(dataset_length, name)
         data_path = ROOT_PATH / "data" / "DigiCam" / name
         self.masks = data_path / "masks"
+        self.psfs_fft = data_path / "psfs_fft"
+        self.psfs_fft.mkdir(exist_ok=True, parents=True)
+        self.psf_fft_by_num = {}
+        if index_path.exists():
+            index = read_json(str(index_path))
+            psfs = Path(self.psfs_fft)
+            for file_path in psfs.iterdir():
+                if file_path.is_file():
+                    num = int(file_path.name.split(".")[0])
+                    self.psf_fft_by_num[num] = torch.load(file_path)
+        else:
+            index = self._create_index(dataset_length, name)
+
         super().__init__(index, *args, **kwargs)
 
     def _create_index(self, dataset_length, name):
@@ -70,18 +80,6 @@ class DigiCamDataset(BaseDataset):
         # In this example, we create a synthesized dataset. However, in real
         # tasks, you should process dataset metadata and append it
         # to index. See other branches.
-        for i in tqdm(range(dataset_length)):
-            # create dataset
-            obj_path = data_path / f"{i: 0{number_of_zeros}d}"
-            obj_path.mkdir(exist_ok=True, parents=True)
-            path_less = data_path / f"{i: 0{number_of_zeros}d}" / "lensless.pt"
-            path_lensed = data_path / f"{i: 0{number_of_zeros}d}" / "lensed.pt"
-            torch.save(ds[i]["lensless"], path_less)
-            torch.save(ds[i]["lensed"], path_lensed)
-
-            # parse dataset metadata and append it to index
-            index.append({"path": str(obj_path), "mask_label": ds[i]["mask_label"], "id": i})
-
         masks = snapshot_download(
             repo_id=DATASET_ID,
             repo_type="dataset",
@@ -89,6 +87,21 @@ class DigiCamDataset(BaseDataset):
             local_dir=data_path,
         )
         self.masks = masks
+        for i in tqdm(range(dataset_length)):
+            # create dataset
+            obj_path = data_path / f"{i: 0{number_of_zeros}d}.pt"
+            tmp = ds[i]
+            tmp.update(DoubleSizes(masks_root=self.masks, **ds[i]))
+            if tmp["mask_label"] not in self.psf_fft_by_num:
+                psf = tmp["psf"]
+                psf_fft = psf_prepare(psf)[0]
+                self.psf_fft_by_num[tmp["mask_label"]] = psf_fft
+                torch.save(psf_fft, self.psfs_fft / f"{tmp['mask_label']}.pt")
+            tmp = {"lensless": tmp["lensless"], "lensed": tmp["lensed"]}
+            torch.save(tmp, obj_path)
+            index.append(
+                {"path": str(obj_path), "mask_label": ds[i]["mask_label"], "id": i}
+            )
 
         # write index to disk
         write_json(index, str(data_path / "index.json"))
@@ -104,9 +117,7 @@ class DigiCamDataset(BaseDataset):
         Returns:
             data_object (Tensor):
         """
-        lensless = torch.load(Path(path) / "lensless.pt")
-        lensed = torch.load(Path(path) / "lensed.pt")
-        data_object = {"lensless": lensless, "lensed": lensed}
+        data_object = torch.load(Path(path))
         return data_object
 
     def __getitem__(self, ind):
@@ -128,8 +139,13 @@ class DigiCamDataset(BaseDataset):
         data_path = data_dict["path"]
         data_object = self.load_object(data_path)
         data_label = data_dict["mask_label"]
-        data_object.update({"mask_label": data_label, "id": data_dict["id"]})
-
+        data_object.update(
+            {
+                "mask_label": data_label,
+                "id": data_dict["id"],
+                "psf_fft": self.psf_fft_by_num[data_label],
+            }
+        )
         instance_data = data_object
         instance_data = self.preprocess_data(instance_data)
 
@@ -149,7 +165,6 @@ class DigiCamDataset(BaseDataset):
                 (a single dataset element) (possibly transformed via
                 instance transform).
         """
-        instance_data.update(DoubleSizes(masks_root=self.masks, **instance_data))
         if self.instance_transforms is not None:
             for transform_name in self.instance_transforms.keys():
                 instance_data[transform_name] = self.instance_transforms[
