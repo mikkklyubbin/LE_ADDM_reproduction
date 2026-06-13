@@ -12,7 +12,9 @@ def load_mask_by_id(mask_label, masks_root):
 
 
 def DoubleSizes(masks_root, fast=False, **data):
-    mask = load_mask_by_id(data["mask_label"], masks_root)
+    mask = None
+    if not fast:
+        mask = load_mask_by_id(data["mask_label"], masks_root)
     lensed, lensless, psf = get_dataset_object(
         data["lensed"], data["lensless"], mask, fast=fast
     )
