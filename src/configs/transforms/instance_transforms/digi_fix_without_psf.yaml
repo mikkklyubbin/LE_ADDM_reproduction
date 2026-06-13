@@ -1,0 +1,21 @@
+train:
+  lensed:
+    _target_: src.transforms.tensor_transforms.DimSwap
+    permutation: [2, 0, 1]
+  lensless:
+    _target_: src.transforms.tensor_transforms.DimSwap
+    permutation: [2, 0, 1]
+  psf_fft:
+    _target_: src.transforms.tensor_transforms.Squeeze
+    dim: 0
+
+inference:
+  lensed:
+    _target_: src.transforms.tensor_transforms.DimSwap
+    permutation: [2, 0, 1]
+  lensless:
+    _target_: src.transforms.tensor_transforms.DimSwap
+    permutation: [2, 0, 1]
+  psf_fft:
+    _target_: src.transforms.tensor_transforms.Squeeze
+    dim: 0

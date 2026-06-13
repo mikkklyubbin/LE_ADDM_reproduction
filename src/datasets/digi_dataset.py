@@ -80,13 +80,12 @@ class DigiCamDataset(BaseDataset):
         # In this example, we create a synthesized dataset. However, in real
         # tasks, you should process dataset metadata and append it
         # to index. See other branches.
-        masks = snapshot_download(
+        snapshot_download(
             repo_id=DATASET_ID,
             repo_type="dataset",
             allow_patterns="masks/*.npy",
             local_dir=data_path,
         )
-        self.masks = masks
         for i in tqdm(range(dataset_length)):
             # create dataset
             obj_path = data_path / f"{i: 0{number_of_zeros}d}.pt"
@@ -94,6 +93,7 @@ class DigiCamDataset(BaseDataset):
             tmp.update(DoubleSizes(masks_root=self.masks, **ds[i]))
             if tmp["mask_label"] not in self.psf_fft_by_num:
                 psf = tmp["psf"]
+                psf = psf.permute(2, 0, 1)
                 psf_fft = psf_prepare(psf)[0]
                 self.psf_fft_by_num[tmp["mask_label"]] = psf_fft
                 torch.save(psf_fft, self.psfs_fft / f"{tmp['mask_label']}.pt")
