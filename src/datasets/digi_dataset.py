@@ -90,10 +90,11 @@ class DigiCamDataset(BaseDataset):
             # create dataset
             obj_path = data_path / f"{i: 0{number_of_zeros}d}.pt"
             tmp = ds[i]
-            tmp.update(DoubleSizes(masks_root=self.masks, **ds[i]))
-            if tmp["mask_label"] not in self.psf_fft_by_num:
+            need = tmp["mask_label"] not in self.psf_fft_by_num
+            tmp.update(DoubleSizes(masks_root=self.masks, fast=not (need), **ds[i]))
+            if need:
                 psf = tmp["psf"]
-                psf = psf.permute(2, 0, 1)
+                psf = psf.permute(0, 3, 1, 2)
                 psf_fft = psf_prepare(psf)[0]
                 self.psf_fft_by_num[tmp["mask_label"]] = psf_fft
                 torch.save(psf_fft, self.psfs_fft / f"{tmp['mask_label']}.pt")

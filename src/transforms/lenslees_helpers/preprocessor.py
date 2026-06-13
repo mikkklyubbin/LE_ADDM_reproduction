@@ -3,6 +3,7 @@ import warnings
 import cv2
 import numpy as np
 import torch
+
 from src.transforms.lenslees_helpers.psf import simulate_psf_from_mask
 from src.transforms.lenslees_helpers.utils import resize
 
@@ -56,6 +57,7 @@ def get_roi_tensors(image):
         ALIGNMENT["top_left"][1] : ALIGNMENT["top_left"][1] + ALIGNMENT["width"],
     ]
 
+
 def get_roi(image):
     return image[
         ALIGNMENT["top_left"][0] : ALIGNMENT["top_left"][0] + ALIGNMENT["height"],
@@ -63,7 +65,7 @@ def get_roi(image):
     ]
 
 
-def get_dataset_object(lensed, lensless, mask_vals):
+def get_dataset_object(lensed, lensless, mask_vals, fast=False):
     lensed = convert_image_to_float(force_rgb(np.array(lensed)))
     lensless = convert_image_to_float(force_rgb(np.array(lensless)))
 
@@ -72,6 +74,7 @@ def get_dataset_object(lensed, lensless, mask_vals):
 
     lensed = get_cropped_lensed(lensed, lensless)
     lensed = torch.from_numpy(lensed)
-
+    if fast:
+        return lensed, lensless, None
     psf = simulate_psf_from_mask(mask_vals)
     return lensed, lensless, psf

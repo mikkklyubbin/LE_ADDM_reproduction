@@ -4,7 +4,7 @@ defaults:
   - metrics: digi
   - datasets: train_digicam
   - dataloader: example
-  - transforms: digi_trans
+  - transforms: without_psf
   - _self_
 optimizer:
   _target_: torch.optim.Adam
@@ -26,7 +26,7 @@ trainer:
   log_step: 50
   n_epochs: 25
   epoch_len: 8500
-  device_tensors: ["lensed", "lensless", "psf"] # which tensors should be on device (ex. GPU)
+  device_tensors: ["lensed", "lensless", "psf_fft"] # which tensors should be on device (ex. GPU)
   resume_from: null # null or path to the checkpoint dir with *.pth and config.yaml
   device: auto # device name or "auto"
   override: True # if True, will override the previous run with the same name

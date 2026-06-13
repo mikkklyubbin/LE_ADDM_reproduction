@@ -1,7 +1,8 @@
 import numpy as np
 import torch
-from src.transforms.lenslees_helpers.preprocessor import get_dataset_object
 from torch import nn
+
+from src.transforms.lenslees_helpers.preprocessor import get_dataset_object
 
 
 def load_mask_by_id(mask_label, masks_root):
@@ -10,11 +11,16 @@ def load_mask_by_id(mask_label, masks_root):
     return mask
 
 
-def DoubleSizes(masks_root, **data):
+def DoubleSizes(masks_root, fast=False, **data):
     mask = load_mask_by_id(data["mask_label"], masks_root)
-    lensed, lensless, psf = get_dataset_object(data["lensed"], data["lensless"], mask)
+    lensed, lensless, psf = get_dataset_object(
+        data["lensed"], data["lensless"], mask, fast=fast
+    )
     return {"lensed": lensed, "lensless": lensless, "psf": psf}
 
+
 def ChangeData(**data):
-    lensed, lensless, psf = get_dataset_object(data["lensed"], data["lensless"], data["mask"])
+    lensed, lensless, psf = get_dataset_object(
+        data["lensed"], data["lensless"], data["mask"]
+    )
     return {"lensed": lensed, "lensless": lensless, "psf": psf}
