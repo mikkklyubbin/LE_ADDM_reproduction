@@ -5,7 +5,14 @@ import torch.nn.functional as F
 from matplotlib import pyplot as plt
 from torch import nn
 
-from src.model.ADMM_math import calc_norms, check_H, make_iteration, zero_init
+from src.model.ADMM_math import (
+    calc_norm,
+    calc_norms,
+    check_H,
+    ct,
+    make_iteration,
+    zero_init,
+)
 from src.model.drunet import Drunet
 from src.utils.io_utils import ROOT_PATH
 
@@ -62,6 +69,8 @@ class ADMM(nn.Module):
         psf_fft = torch.fft.fft2(psf)
         x_0, al1, al2_x, al2_y, al3 = zero_init(psf_fft, dtype, device)
         norm_psf, norm_dx, norm_dy = calc_norms(x_0, psf_fft)
+        ctb = ct(b)
+        mask = ct(torch.ones_like(b))
         for i in range(self.num_its):
             x_0, al1, al2_x, al2_y, al3 = make_iteration(
                 x_0,
@@ -76,6 +85,8 @@ class ADMM(nn.Module):
                 norm_psf,
                 norm_dx,
                 norm_dy,
+                ctb,
+                mask,
             )
         x_0 = x_0[:, :, h1 : h1 + lensless.shape[-2], w1 : w1 + lensless.shape[-1]]
         return {"reconstructed": x_0}
@@ -106,6 +117,9 @@ class leADMM(nn.Module):
             inverse_softplus(torch.zeros(num_its, requires_grad=True) + 2e-4)
         )
         self.num_its = num_its
+        self.inited = False
+        self.dx_norm = None
+        self.dy_norm = None
 
     @property
     def device(self):
@@ -122,7 +136,14 @@ class leADMM(nn.Module):
         psf = torch.fft.ifftshift(psf, dim=(-2, -1))
         psf_fft = torch.fft.fft2(psf)
         x_0, al1, al2_x, al2_y, al3 = zero_init(psf_fft, dtype, device)
-        norm_psf, norm_dx, norm_dy = calc_norms(x_0, psf_fft)
+        ctb = ct(b)
+        mask = ct(torch.ones_like(b))
+        norm_psf = 0
+        if not (self.inited):
+            norm_psf, self.dx_norm, self.dy_norm = calc_norms(x_0, psf_fft)
+            self.inited = True
+        else:
+            norm_psf = calc_norm(psf_fft)
         for i in range(self.num_its):
             x_0, al1, al2_x, al2_y, al3 = make_iteration(
                 x_0,
@@ -135,8 +156,10 @@ class leADMM(nn.Module):
                 F.softplus(self.us[i]),
                 F.softplus(self.tau[i]),
                 norm_psf,
-                norm_dx,
-                norm_dy,
+                self.dx_norm,
+                self.dy_norm,
+                ctb,
+                mask,
             )
         x_0 = x_0[:, :, h1 : h1 + lensless.shape[-2], w1 : w1 + lensless.shape[-1]]
         return {"reconstructed": x_0}
