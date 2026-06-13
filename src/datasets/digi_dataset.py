@@ -91,14 +91,14 @@ class DigiCamDataset(BaseDataset):
             obj_path = data_path / f"{i: 0{number_of_zeros}d}.pt"
             tmp = ds[i]
             need = tmp["mask_label"] not in self.psf_fft_by_num
-            tmp.update(DoubleSizes(masks_root=self.masks, fast=not (need), **ds[i]))
             if need:
+                tmp.update(DoubleSizes(masks_root=self.masks, fast=not (need), **ds[i]))
                 psf = tmp["psf"]
                 psf = psf.permute(0, 3, 1, 2)
                 psf_fft = psf_prepare(psf)[0]
                 self.psf_fft_by_num[tmp["mask_label"]] = psf_fft
                 torch.save(psf_fft, self.psfs_fft / f"{tmp['mask_label']}.pt")
-            tmp = {"lensless": tmp["lensless"], "lensed": tmp["lensed"]}
+            tmp = {"lensless": ds[i]["lensless"], "lensed": ds[i]["lensed"]}
             torch.save(tmp, obj_path)
             index.append(
                 {"path": str(obj_path), "mask_label": ds[i]["mask_label"], "id": i}
@@ -140,6 +140,8 @@ class DigiCamDataset(BaseDataset):
         data_path = data_dict["path"]
         data_object = self.load_object(data_path)
         data_label = data_dict["mask_label"]
+        tmp = DoubleSizes(masks_root=self.masks, fast=True, **data_object)
+        data_object.update({"lensless": tmp["lensless"], "lensed": tmp["lensed"]})
         data_object.update(
             {
                 "mask_label": data_label,
