@@ -24,6 +24,7 @@ class TimeChecker(Inferencer):
         self.mean_time = []
         super().__init__(**args)
 
+    @torch.no_grad()
     def process_batch(self, batch_idx, batch, metrics, part):
         """
         Run batch through the model, compute metrics, and
@@ -55,3 +56,18 @@ class TimeChecker(Inferencer):
         batch.update(outputs)
 
         return batch
+
+    def run_inference(self):
+        """
+        Run inference on each partition.
+
+        Returns:
+            part_logs (dict): part_logs[part_name] contains logs
+                for the part_name partition.
+        """
+        part_logs = {}
+        for part, dataloader in self.evaluation_dataloaders.items():
+            logs = self._inference_part(part, dataloader)
+            part_logs[part] = logs
+        print(f"Mean inference time: {sum(self.mean_time) / len(self.mean_time)}")
+        return part_logs

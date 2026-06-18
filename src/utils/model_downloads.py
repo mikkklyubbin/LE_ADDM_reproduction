@@ -14,7 +14,7 @@ def get_model_path(model_name):
     if model_name == "preADMM":
         return MODEL_PATH / "pre_admm.pth"
     if model_name == "leADMM":
-        return MODEL_PATH / "leADMM"
+        return MODEL_PATH / "leADMM.pth"
     if model_name == "ADMMpost":
         return MODEL_PATH / "post_admm_12.pth"
     if model_name == "preADMMpost":

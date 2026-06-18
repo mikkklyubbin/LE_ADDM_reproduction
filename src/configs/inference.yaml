@@ -7,7 +7,7 @@ defaults:
   - _self_
 inferencer:
   device_tensors: ["lensed", "lensless", "psf"] # which tensors should be on device (ex. GPU)
-  device: "cpu" # device name or "auto"
+  device: auto # device name or "auto"
   save_path: "save_outputs" # any name here, can be a dataset name
   seed: 1
   skip_model_load: True
