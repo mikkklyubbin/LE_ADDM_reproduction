@@ -21,6 +21,8 @@ Learned Reconstruction](https://arxiv.org/pdf/2502.01102) без psf correction 
 
 Протестировать обученные модели вы можете используя `demo.ipynb`
 
+Конфигурация и примеры работы каждой модели представлены в `demo_wide.ipynb`
+
 Время работы моделей можно  измерить при помощи скрипта `time_check.py`
 
 ## Instalation
