@@ -12,11 +12,11 @@ def download_models():
 
 def get_model_path(model_name):
     if model_name == "preADMM":
-        return MODEL_PATH / "preADMM"
+        return MODEL_PATH / "pre_admm.pth"
     if model_name == "leADMM":
         return MODEL_PATH / "leADMM"
     if model_name == "ADMMpost":
-        return MODEL_PATH / "post_ADMM_12.pth"
+        return MODEL_PATH / "post_admm_12.pth"
     if model_name == "preADMMpost":
         return MODEL_PATH / "pre_post_12_epoch.pth"
     if model_name == "best":

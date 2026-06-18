@@ -37,6 +37,7 @@ def show_tensor_image(x, title, ax):
     ax.set_title(title)
 
 
+@torch.no_grad()
 def calc_metrics(pred_path, target_path, name_of_files="Image"):
     metrics = {
         "PSNR": ImageMetric("PSNR", "PSNR"),
@@ -54,6 +55,7 @@ def calc_metrics(pred_path, target_path, name_of_files="Image"):
     cnt = 0
     images_for_display = 4
     fig, axes = plt.subplots(images_for_display, 3, figsize=(12, 8))
+    plt.subplots_adjust(wspace=0.3, hspace=0.4)
     for file_path in root.iterdir():
         if file_path.is_file():
             pred = torch.load(file_path)
@@ -68,16 +70,18 @@ def calc_metrics(pred_path, target_path, name_of_files="Image"):
             img = torch.from_numpy(img).permute(2, 0, 1).unsqueeze(0)
             for metric_name, metric in metrics.items():
                 data_metrics[metric_name] += metric(
-                    pred["reconstructed"].unsqueeze(0), img
+                    pred["reconstructed"].unsqueeze(0).cpu(), img.cpu()
                 )
             if cnt < images_for_display:
                 show_tensor_image(
-                    get_roi_tensors(pred["reconstructed"].unsqueeze(0)).squeeze(0),
+                    get_roi_tensors(pred["reconstructed"].unsqueeze(0))
+                    .squeeze(0)
+                    .cpu(),
                     "Reconstructed",
                     axes[cnt, 0],
                 )
                 show_tensor_image(
-                    get_roi_tensors(img).squeeze(0), "GT image", axes[cnt, 1]
+                    get_roi_tensors(img).squeeze(0).cpu(), "GT image", axes[cnt, 1]
                 )
                 show_tensor_image(lensless, "Lensless", axes[cnt, 2])
             cnt += 1
