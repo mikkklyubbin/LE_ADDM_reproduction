@@ -127,14 +127,14 @@ class Inferencer(BaseTrainer):
         if metrics is not None:
             for met in self.metrics["inference"]:
                 metrics.update(met.name, met(**batch))
-        batch_size = batch["id"].shape[0]
+        batch_size = batch["lensless"].shape[0]
 
         for i in range(batch_size):
             # clone because of
             # https://github.com/pytorch/pytorch/issues/1995
             for name in self.names_for_save:
                 data = batch[name][i].clone()
-                label = batch["id"][i].clone()
+                label = batch["id"][i]
                 if self.save_path is not None:
                     dr_path = ROOT_PATH / "data" / self.save_path / name
                     dr_path.mkdir(exist_ok=True, parents=True)
