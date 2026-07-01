@@ -39,7 +39,7 @@ class CustomDirDataset(BaseDataset):
         data_path = data_path / "lensless"
         for file_path in data_path.iterdir():
             if file_path.is_file():
-                id = int(file_path.name.split(".")[0])
+                id = file_path.name.split(".")[0]
                 index.append({"path": str(file_path), "id": id})
                 if len(index) >= dataset_length:
                     break
@@ -57,7 +57,7 @@ class CustomDirDataset(BaseDataset):
             data_object (Tensor):
         """
         lensless = Image.open(path).convert("RGB")
-        path_mask = Path(path).parent.parent / "masks" / (str(id) + ".npy")
+        path_mask = Path(path).parent.parent / "masks" / (id + ".npy")
         mask = np.load(path_mask)
         lensed_fake = np.zeros_like(lensless)
         data_object = {"lensless": lensless, "lensed": lensed_fake, "mask": mask}
